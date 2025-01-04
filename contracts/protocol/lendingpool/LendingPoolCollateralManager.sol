@@ -160,8 +160,10 @@ contract LendingPoolCollateralManager is
       }
     }
 
+    //@note liquidationCall.1
     debtReserve.updateState();
 
+    //@note liquidationCall.2
     if (vars.userVariableDebt >= vars.actualDebtToLiquidate) {
       IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
         user,
@@ -183,6 +185,7 @@ contract LendingPoolCollateralManager is
       );
     }
 
+    //@note liquidationCall.3
     debtReserve.updateInterestRates(
       debtAsset,
       debtReserve.aTokenAddress,
@@ -192,15 +195,19 @@ contract LendingPoolCollateralManager is
 
     if (receiveAToken) {
       vars.liquidatorPreviousATokenBalance = IERC20(vars.collateralAtoken).balanceOf(msg.sender);
+      //@note liquidationCall.4
       vars.collateralAtoken.transferOnLiquidation(user, msg.sender, vars.maxCollateralToLiquidate);
 
       if (vars.liquidatorPreviousATokenBalance == 0) {
         DataTypes.UserConfigurationMap storage liquidatorConfig = _usersConfig[msg.sender];
+        //@note liquidationCall.5
         liquidatorConfig.setUsingAsCollateral(collateralReserve.id, true);
         emit ReserveUsedAsCollateralEnabled(collateralAsset, msg.sender);
       }
     } else {
+      //@note liquidationCall.6
       collateralReserve.updateState();
+      //@note liquidationCall.7
       collateralReserve.updateInterestRates(
         collateralAsset,
         address(vars.collateralAtoken),
@@ -209,6 +216,7 @@ contract LendingPoolCollateralManager is
       );
 
       // Burn the equivalent amount of aToken, sending the underlying to the liquidator
+      //@note liquidationCall.8
       vars.collateralAtoken.burn(
         user,
         msg.sender,
@@ -219,12 +227,14 @@ contract LendingPoolCollateralManager is
 
     // If the collateral being liquidated is equal to the user balance,
     // we set the currency as not being used as collateral anymore
+    //@note liquidationCall.9
     if (vars.maxCollateralToLiquidate == vars.userCollateralBalance) {
       userConfig.setUsingAsCollateral(collateralReserve.id, false);
       emit ReserveUsedAsCollateralDisabled(collateralAsset, user);
     }
 
     // Transfers the debt asset being repaid to the aToken, where the liquidity is kept
+    //@note liquidationCall.10
     IERC20(debtAsset).safeTransferFrom(
       msg.sender,
       debtReserve.aTokenAddress,

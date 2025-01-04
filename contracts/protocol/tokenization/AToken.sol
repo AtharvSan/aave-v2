@@ -195,6 +195,7 @@ contract AToken is
   ) external override onlyLendingPool {
     // Being a normal transfer, the Transfer() and BalanceTransfer() are emitted
     // so no need to emit a specific event here
+    //@note transferOnLiquidation.1
     _transfer(from, to, value, false);
 
     emit Transfer(from, to, value);
@@ -311,6 +312,7 @@ contract AToken is
     onlyLendingPool
     returns (uint256)
   {
+    //@note transferUnderlyingTo.1
     IERC20(_underlyingAsset).safeTransfer(target, amount);
     return amount;
   }
@@ -381,8 +383,10 @@ contract AToken is
     uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
     uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
 
+    //@note _transfer.1
     super._transfer(from, to, amount.rayDiv(index));
 
+    //@note _transfer.2
     if (validate) {
       pool.finalizeTransfer(underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore);
     }

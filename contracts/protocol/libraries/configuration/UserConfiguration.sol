@@ -25,6 +25,8 @@ library UserConfiguration {
     bool borrowing
   ) internal {
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
+
+    //@note setBorrowing.1
     self.data =
       (self.data & ~(1 << (reserveIndex * 2))) |
       (uint256(borrowing ? 1 : 0) << (reserveIndex * 2));

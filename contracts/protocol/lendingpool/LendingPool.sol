@@ -261,11 +261,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       paybackAmount = amount;
     }
 
+    //@note repay.1
     reserve.updateState();
 
     if (interestRateMode == DataTypes.InterestRateMode.STABLE) {
+      //@note repay.2
       IStableDebtToken(reserve.stableDebtTokenAddress).burn(onBehalfOf, paybackAmount);
     } else {
+      //@note repay.3
       IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
         onBehalfOf,
         paybackAmount,
@@ -274,14 +277,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
 
     address aToken = reserve.aTokenAddress;
+    //@note repay.4
     reserve.updateInterestRates(asset, aToken, paybackAmount, 0);
 
+    //@note repay.5
     if (stableDebt.add(variableDebt).sub(paybackAmount) == 0) {
       _usersConfig[onBehalfOf].setBorrowing(reserve.id, false);
     }
 
+    //@note repay.6
     IERC20(asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
 
+    //@note repay.7
     IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
 
     emit Repay(asset, onBehalfOf, msg.sender, paybackAmount);
@@ -309,10 +316,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       interestRateMode
     );
 
+    //@note swapBorrwoRateMode.1
     reserve.updateState();
 
     if (interestRateMode == DataTypes.InterestRateMode.STABLE) {
+      //@note swapBorrwoRateMode.2
       IStableDebtToken(reserve.stableDebtTokenAddress).burn(msg.sender, stableDebt);
+      //@note swapBorrwoRateMode.3
       IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
         msg.sender,
         msg.sender,
@@ -320,11 +330,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         reserve.variableBorrowIndex
       );
     } else {
+      //@note swapBorrwoRateMode.4
       IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
         msg.sender,
         variableDebt,
         reserve.variableBorrowIndex
       );
+      //@note swapBorrwoRateMode.5
       IStableDebtToken(reserve.stableDebtTokenAddress).mint(
         msg.sender,
         msg.sender,
@@ -333,6 +345,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       );
     }
 
+    //@note swapBorrwoRateMode.6
     reserve.updateInterestRates(asset, reserve.aTokenAddress, 0, 0);
 
     emit Swap(asset, msg.sender, rateMode);
@@ -364,9 +377,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       aTokenAddress
     );
 
+    //@note rebalanceStableBorrowRate.1
     reserve.updateState();
 
+    //@note rebalanceStableBorrowRate.2
     IStableDebtToken(address(stableDebtToken)).burn(user, stableDebt);
+    //@note rebalanceStableBorrowRate.3
     IStableDebtToken(address(stableDebtToken)).mint(
       user,
       user,
@@ -374,6 +390,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       reserve.currentStableBorrowRate
     );
 
+    //@note rebalanceStableBorrowRate.4
     reserve.updateInterestRates(asset, aTokenAddress, 0, 0);
 
     emit RebalanceStableBorrowRate(asset, user);
@@ -402,6 +419,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _addressesProvider.getPriceOracle()
     );
 
+    //@note setUserUseReserveAsCollateral.1
     _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
 
     if (useAsCollateral) {
@@ -432,6 +450,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line
+    //@note liquidationCall.1
     (bool success, bytes memory result) =
       collateralManager.delegatecall(
         abi.encodeWithSignature(
@@ -503,6 +522,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
       premiums[vars.i] = amounts[vars.i].mul(_flashLoanPremiumTotal).div(10000);
 
+      //@note flashLoan.1
       IAToken(aTokenAddresses[vars.i]).transferUnderlyingTo(receiverAddress, amounts[vars.i]);
     }
 
@@ -519,11 +539,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       vars.currentAmountPlusPremium = vars.currentAmount.add(vars.currentPremium);
 
       if (DataTypes.InterestRateMode(modes[vars.i]) == DataTypes.InterestRateMode.NONE) {
+        //@note flashLoan.2
         _reserves[vars.currentAsset].updateState();
+        //@note flashLoan.3
         _reserves[vars.currentAsset].cumulateToLiquidityIndex(
           IERC20(vars.currentATokenAddress).totalSupply(),
           vars.currentPremium
         );
+        //@note flashLoan.4
         _reserves[vars.currentAsset].updateInterestRates(
           vars.currentAsset,
           vars.currentATokenAddress,
@@ -531,6 +554,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
           0
         );
 
+        //@note flashLoan.5
         IERC20(vars.currentAsset).safeTransferFrom(
           receiverAddress,
           vars.currentATokenAddress,
@@ -539,6 +563,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       } else {
         // If the user chose to not return the funds, the system checks if there is enough collateral and
         // eventually opens a debt position
+        //@note flashLoan.6
         _executeBorrow(
           ExecuteBorrowParams(
             vars.currentAsset,
@@ -878,6 +903,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       oracle
     );
 
+    //@note borrow.1
     reserve.updateState();
 
     uint256 currentStableRate = 0;
@@ -886,6 +912,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     if (DataTypes.InterestRateMode(vars.interestRateMode) == DataTypes.InterestRateMode.STABLE) {
       currentStableRate = reserve.currentStableBorrowRate;
 
+      //@note borrow.2
       isFirstBorrowing = IStableDebtToken(reserve.stableDebtTokenAddress).mint(
         vars.user,
         vars.onBehalfOf,
@@ -893,6 +920,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         currentStableRate
       );
     } else {
+      //@note borrow.3
       isFirstBorrowing = IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
         vars.user,
         vars.onBehalfOf,
@@ -901,10 +929,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       );
     }
 
+    //@note borrow.4
     if (isFirstBorrowing) {
       userConfig.setBorrowing(reserve.id, true);
     }
 
+    //@note borrow.5
     reserve.updateInterestRates(
       vars.asset,
       vars.aTokenAddress,
@@ -912,6 +942,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       vars.releaseUnderlying ? vars.amount : 0
     );
 
+    //@note borrow.6
     if (vars.releaseUnderlying) {
       IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
     }

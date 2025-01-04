@@ -98,6 +98,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     uint256 amount,
     uint256 index
   ) external override onlyLendingPool returns (bool) {
+    //@note mint.1
     if (user != onBehalfOf) {
       _decreaseBorrowAllowance(onBehalfOf, user, amount);
     }
@@ -106,6 +107,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     uint256 amountScaled = amount.rayDiv(index);
     require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
 
+    //@note mint.2
     _mint(onBehalfOf, amountScaled);
 
     emit Transfer(address(0), onBehalfOf, amount);
@@ -129,6 +131,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     uint256 amountScaled = amount.rayDiv(index);
     require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
 
+    //@note burn.1
     _burn(user, amountScaled);
 
     emit Transfer(user, address(0), amount);

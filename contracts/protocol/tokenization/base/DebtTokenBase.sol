@@ -126,6 +126,7 @@ abstract contract DebtTokenBase is
     uint256 newAllowance =
       _borrowAllowances[delegator][delegatee].sub(amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
 
+    //@note _decreaseBorrowAllowance.1
     _borrowAllowances[delegator][delegatee] = newAllowance;
 
     emit BorrowAllowanceDelegated(delegator, delegatee, _getUnderlyingAssetAddress(), newAllowance);

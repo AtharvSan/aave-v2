@@ -141,6 +141,7 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
   ) external override onlyLendingPool returns (bool) {
     MintLocalVars memory vars;
 
+    //@note mint.1
     if (user != onBehalfOf) {
       _decreaseBorrowAllowance(onBehalfOf, user, amount);
     }
@@ -149,6 +150,8 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
 
     vars.previousSupply = totalSupply();
     vars.currentAvgStableRate = _avgStableRate;
+
+    //@note mint.2
     vars.nextSupply = _totalSupply = vars.previousSupply.add(amount);
 
     vars.amountInRay = amount.wadToRay();
@@ -159,18 +162,23 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
       .rayDiv(currentBalance.add(amount).wadToRay());
 
     require(vars.newStableRate <= type(uint128).max, Errors.SDT_STABLE_DEBT_OVERFLOW);
+    
+    //@note mint.3
     _usersStableRate[onBehalfOf] = vars.newStableRate;
 
     //solium-disable-next-line
+    //@note mint.4.5
     _totalSupplyTimestamp = _timestamps[onBehalfOf] = uint40(block.timestamp);
 
     // Calculates the updated average stable rate
+    //@note mint.6
     vars.currentAvgStableRate = _avgStableRate = vars
       .currentAvgStableRate
       .rayMul(vars.previousSupply.wadToRay())
       .add(rate.rayMul(vars.amountInRay))
       .rayDiv(vars.nextSupply.wadToRay());
 
+    //@note mint.7
     _mint(onBehalfOf, amount.add(balanceIncrease), vars.previousSupply);
 
     emit Transfer(address(0), onBehalfOf, amount);
@@ -206,6 +214,7 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
     // there might be accumulation errors so that the last borrower repaying
     // mght actually try to repay more than the available debt supply.
     // In this case we simply set the total supply and the avg stable rate to 0
+    //@note burn.1
     if (previousSupply <= amount) {
       _avgStableRate = 0;
       _totalSupply = 0;
@@ -224,6 +233,7 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
       }
     }
 
+    //@note burn.2
     if (amount == currentBalance) {
       _usersStableRate[user] = 0;
       _timestamps[user] = 0;
@@ -232,10 +242,12 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
       _timestamps[user] = uint40(block.timestamp);
     }
     //solium-disable-next-line
+    //@note burn.3
     _totalSupplyTimestamp = uint40(block.timestamp);
 
     if (balanceIncrease > amount) {
       uint256 amountToMint = balanceIncrease.sub(amount);
+      //@note burn.4
       _mint(user, amountToMint, previousSupply);
       emit Mint(
         user,
@@ -249,6 +261,7 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
       );
     } else {
       uint256 amountToBurn = amount.sub(balanceIncrease);
+      //@note burn.4
       _burn(user, amountToBurn, previousSupply);
       emit Burn(user, amountToBurn, currentBalance, balanceIncrease, newAvgStableRate, nextSupply);
     }
@@ -407,8 +420,11 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
     uint256 oldTotalSupply
   ) internal {
     uint256 oldAccountBalance = _balances[account];
+
+    //@note _mint.1
     _balances[account] = oldAccountBalance.add(amount);
 
+    //@note _mint.2
     if (address(_incentivesController) != address(0)) {
       _incentivesController.handleAction(account, oldTotalSupply, oldAccountBalance);
     }

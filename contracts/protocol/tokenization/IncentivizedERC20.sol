@@ -197,11 +197,16 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     _beforeTokenTransfer(address(0), account, amount);
 
     uint256 oldTotalSupply = _totalSupply;
+
+    //@note _mint.1
     _totalSupply = oldTotalSupply.add(amount);
 
     uint256 oldAccountBalance = _balances[account];
+
+    //@note _mint.2
     _balances[account] = oldAccountBalance.add(amount);
 
+    //@note _mint.3
     if (address(_getIncentivesController()) != address(0)) {
       _getIncentivesController().handleAction(account, oldTotalSupply, oldAccountBalance);
     }
@@ -213,11 +218,14 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     _beforeTokenTransfer(account, address(0), amount);
 
     uint256 oldTotalSupply = _totalSupply;
+    //@note _burn.1
     _totalSupply = oldTotalSupply.sub(amount);
 
     uint256 oldAccountBalance = _balances[account];
+    //@note _burn.2
     _balances[account] = oldAccountBalance.sub(amount, 'ERC20: burn amount exceeds balance');
 
+    //@note _burn.3
     if (address(_getIncentivesController()) != address(0)) {
       _getIncentivesController().handleAction(account, oldTotalSupply, oldAccountBalance);
     }

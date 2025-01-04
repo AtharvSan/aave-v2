@@ -114,6 +114,7 @@ library ReserveLogic {
     uint256 previousLiquidityIndex = reserve.liquidityIndex;
     uint40 lastUpdatedTimestamp = reserve.lastUpdateTimestamp;
 
+    //@note updateState.1
     (uint256 newLiquidityIndex, uint256 newVariableBorrowIndex) =
       _updateIndexes(
         reserve,
@@ -123,6 +124,7 @@ library ReserveLogic {
         lastUpdatedTimestamp
       );
 
+    //@note updateState.2
     _mintToTreasury(
       reserve,
       scaledVariableDebt,
@@ -152,6 +154,7 @@ library ReserveLogic {
     result = result.rayMul(reserve.liquidityIndex);
     require(result <= type(uint128).max, Errors.RL_LIQUIDITY_INDEX_OVERFLOW);
 
+    //@note cumulateToLiquidityIndex.1
     reserve.liquidityIndex = uint128(result);
   }
 
@@ -234,6 +237,7 @@ library ReserveLogic {
     require(vars.newStableRate <= type(uint128).max, Errors.RL_STABLE_BORROW_RATE_OVERFLOW);
     require(vars.newVariableRate <= type(uint128).max, Errors.RL_VARIABLE_BORROW_RATE_OVERFLOW);
 
+    //@note updateInterestRates.1
     reserve.currentLiquidityRate = uint128(vars.newLiquidityRate);
     reserve.currentStableBorrowRate = uint128(vars.newStableRate);
     reserve.currentVariableBorrowRate = uint128(vars.newVariableRate);
@@ -319,6 +323,7 @@ library ReserveLogic {
 
     vars.amountToMint = vars.totalDebtAccrued.percentMul(vars.reserveFactor);
 
+    //@note _mintToTreasury.1
     if (vars.amountToMint != 0) {
       IAToken(reserve.aTokenAddress).mintToTreasury(vars.amountToMint, newLiquidityIndex);
     }
@@ -350,6 +355,7 @@ library ReserveLogic {
       newLiquidityIndex = cumulatedLiquidityInterest.rayMul(liquidityIndex);
       require(newLiquidityIndex <= type(uint128).max, Errors.RL_LIQUIDITY_INDEX_OVERFLOW);
 
+      //@note _updateIndexes.1
       reserve.liquidityIndex = uint128(newLiquidityIndex);
 
       //as the liquidity rate might come only from stable rate loans, we need to ensure
@@ -362,11 +368,13 @@ library ReserveLogic {
           newVariableBorrowIndex <= type(uint128).max,
           Errors.RL_VARIABLE_BORROW_INDEX_OVERFLOW
         );
+        //@note _updateIndexes.2
         reserve.variableBorrowIndex = uint128(newVariableBorrowIndex);
       }
     }
 
     //solium-disable-next-line
+    //@note _updateIndexes.3
     reserve.lastUpdateTimestamp = uint40(block.timestamp);
     return (newLiquidityIndex, newVariableBorrowIndex);
   }
