@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
 import {UserConfiguration} from '../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
