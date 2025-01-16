@@ -15,6 +15,7 @@ import {Errors} from '../helpers/Errors.sol';
 import {Helpers} from '../helpers/Helpers.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import {console} from 'lib/forge-std/src/console.sol';
 
 /**
  * @title ReserveLogic library

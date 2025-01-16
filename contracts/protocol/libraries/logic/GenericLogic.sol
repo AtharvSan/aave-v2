@@ -11,6 +11,7 @@ import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import {console} from 'lib/forge-std/src/console.sol';
 
 /**
  * @title GenericLogic library
